@@ -131,6 +131,7 @@ resource "aws_security_group" "public_web" {
   vpc_id = aws_vpc.this.id
 
   ingress {
+    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -145,6 +146,7 @@ resource "aws_security_group" "public_web" {
   }
 
   ingress {
+    description = "HTTP"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
@@ -170,6 +172,7 @@ resource "aws_security_group" "private_app" {
   }
 
   egress {
+    description = "HTTP"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"

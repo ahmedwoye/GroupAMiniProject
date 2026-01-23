@@ -5,7 +5,7 @@ pipeline {
         choice(
             name: 'IF_ACTION',
             choices: ['plan', 'apply', 'destroy'],
-            description: 'Select which Terraform action to run'
+            description: 'select which Terraform action to run'
         )
     }
 
@@ -17,34 +17,13 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
+        stage('checkout') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Check Terraform directory') {
-            steps {
-                script {
-                    // Check if any .tf files exist in the terraform directory
-                    def tfFiles = sh(script: "ls terraform/*.tf 2>/dev/null || true", returnStdout: true).trim()
-                    if (tfFiles) {
-                        echo "✅ Terraform files found. Proceeding..."
-                        // Set a flag to indicate Terraform is present
-                        currentBuild.description = "Terraform files detected"
-                        env.TF_PRESENT = "true"
-                    } else {
-                        echo "⚠️ Warning: Terraform directory is empty. Skipping Terraform stages."
-                        env.TF_PRESENT = "false"
-                    }
-                }
-            }
-        }
-
-        stage('Terraform Init') {
-            when {
-                expression { env.TF_PRESENT == "true" }
-            }
+        stage('terraform init') {
             steps {
                 dir('terraform') {
                     sh 'terraform init -reconfigure'
@@ -52,10 +31,7 @@ pipeline {
             }
         }
 
-        stage('Terraform Validate') {
-            when {
-                expression { env.TF_PRESENT == "true" }
-            }
+        stage('terraform validate') {
             steps {
                 dir('terraform') {
                     sh 'terraform validate'
@@ -63,12 +39,9 @@ pipeline {
             }
         }
 
-        stage('Terraform Plan') {
+        stage('terraform plan') {
             when {
-                allOf {
-                    expression { env.TF_PRESENT == "true" }
-                    expression { params.IF_ACTION == 'plan' }
-                }
+                expression { params.IF_ACTION == 'plan' }
             }
             steps {
                 dir('terraform') {
@@ -77,12 +50,9 @@ pipeline {
             }
         }
 
-        stage('Terraform Apply') {
+        stage('terraform apply') {
             when {
-                allOf {
-                    expression { env.TF_PRESENT == "true" }
-                    expression { params.IF_ACTION == 'apply' }
-                }
+                expression { params.IF_ACTION == 'apply' }
             }
             steps {
                 dir('terraform') {
@@ -91,25 +61,15 @@ pipeline {
             }
         }
 
-        stage('Terraform Destroy') {
+        stage('terraform destroy') {
             when {
-                allOf {
-                    expression { env.TF_PRESENT == "true" }
-                    expression { params.IF_ACTION == 'destroy' }
-                }
+                expression { params.IF_ACTION == 'destroy' }
             }
             steps {
                 dir('terraform') {
                     sh 'terraform destroy -auto-approve'
                 }
             }
-        }
-
-    }
-
-    post {
-        always {
-            echo "Pipeline finished."
         }
     }
 }

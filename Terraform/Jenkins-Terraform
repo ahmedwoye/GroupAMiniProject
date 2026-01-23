@@ -5,7 +5,7 @@ pipeline {
         choice(
             name: 'IF_ACTION',
             choices: ['plan', 'apply', 'destroy'],
-            description: 'select which Terraform action to run'
+            description: 'Select which Terraform action to run'
         )
     }
 
@@ -17,13 +17,28 @@ pipeline {
 
     stages {
 
-        stage('checkout') {
+        stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        stage('terraform init') {
+        stage('Check Terraform directory') {
+            steps {
+                script {
+                    dir('terraform') {
+                        def tfFiles = sh(script: 'ls *.tf 2>/dev/null || true', returnStdout: true).trim()
+                        if (!tfFiles) {
+                            error "❌ Terraform directory is empty! Please add Terraform configuration files (.tf) in the 'terraform/' folder."
+                        } else {
+                            echo "✅ Found Terraform files: \n${tfFiles}"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Init') {
             steps {
                 dir('terraform') {
                     sh 'terraform init -reconfigure'
@@ -31,7 +46,7 @@ pipeline {
             }
         }
 
-        stage('terraform validate') {
+        stage('Terraform Validate') {
             steps {
                 dir('terraform') {
                     sh 'terraform validate'
@@ -39,37 +54,38 @@ pipeline {
             }
         }
 
-        stage('terraform plan') {
+        stage('Terraform Plan') {
             when {
                 expression { params.IF_ACTION == 'plan' }
             }
             steps {
                 dir('terraform') {
-                    sh 'terraform plan'
+                    sh 'terraform plan -var-file="terraform.tfvars"'
                 }
             }
         }
 
-        stage('terraform apply') {
+        stage('Terraform Apply') {
             when {
                 expression { params.IF_ACTION == 'apply' }
             }
             steps {
                 dir('terraform') {
-                    sh 'terraform apply -auto-approve'
+                    sh 'terraform apply -var-file="terraform.tfvars" -auto-approve'
                 }
             }
         }
 
-        stage('terraform destroy') {
+        stage('Terraform Destroy') {
             when {
                 expression { params.IF_ACTION == 'destroy' }
             }
             steps {
                 dir('terraform') {
-                    sh 'terraform destroy -auto-approve'
+                    sh 'terraform destroy -var-file="terraform.tfvars" -auto-approve'
                 }
             }
         }
+
     }
 }

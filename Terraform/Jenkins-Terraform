@@ -23,17 +23,19 @@ pipeline {
             }
         }
 
-       stage('terraform init') {
-    steps {
-        dir('terraform') {
-            sh 'terraform init -reconfigure'
+        stage('terraform init') {
+            steps {
+                dir('terraform') {
+                    sh 'terraform init -reconfigure'
+                }
+            }
         }
-    }
-}
 
         stage('terraform validate') {
             steps {
-                sh 'terraform validate'
+                dir('terraform') {
+                    sh 'terraform validate'
+                }
             }
         }
 
@@ -42,29 +44,31 @@ pipeline {
                 expression { params.IF_ACTION == 'plan' }
             }
             steps {
-                sh 'terraform plan'
+                dir('terraform') {
+                    sh 'terraform plan'
+                }
             }
         }
-
-       
 
         stage('terraform apply') {
             when {
                 expression { params.IF_ACTION == 'apply' }
             }
             steps {
-        dir('terraform') {
-            sh 'terraform apply -auto-approve'
+                dir('terraform') {
+                    sh 'terraform apply -auto-approve'
+                }
+            }
         }
-    }
-}
 
         stage('terraform destroy') {
             when {
                 expression { params.IF_ACTION == 'destroy' }
             }
             steps {
-                sh 'terraform destroy -auto-approve'
+                dir('terraform') {
+                    sh 'terraform destroy -auto-approve'
+                }
             }
         }
     }

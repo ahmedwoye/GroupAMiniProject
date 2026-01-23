@@ -23,11 +23,13 @@ pipeline {
             }
         }
 
-        stage('terraform init') {
-            steps {
-                sh 'terraform init -reconfigure'
-            }
+       stage('terraform init') {
+    steps {
+        dir('terraform') {
+            sh 'terraform init -reconfigure'
         }
+    }
+}
 
         stage('terraform validate') {
             steps {
@@ -44,14 +46,18 @@ pipeline {
             }
         }
 
+       
+
         stage('terraform apply') {
             when {
                 expression { params.IF_ACTION == 'apply' }
             }
             steps {
-                sh 'terraform apply -auto-approve'
-            }
+        dir('terraform') {
+            sh 'terraform apply -auto-approve'
         }
+    }
+}
 
         stage('terraform destroy') {
             when {

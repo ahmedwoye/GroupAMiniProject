@@ -33,22 +33,22 @@ pipeline {
 
         stage('terraform validate') {
             steps {
-                dir('terraform') {
+               
                     sh 'terraform validate'
                 }
             }
-        }
+        
 
         stage('terraform plan') {
             when {
                 expression { params.IF_ACTION == 'plan' }
             }
             steps {
-                dir('terraform') {
+               
                     sh 'terraform plan'
                 }
             }
-        }
+        
 
         stage('terraform apply') {
             when {
